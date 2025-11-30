@@ -6,9 +6,9 @@ services:
       - PUID=1000
       - PGID=1000
       - TZ=America/Los_Angeles
-    # volumes:
-    #   - /path/to/config/jellyfin:/config
-    #   - /path/to/media:/media
+    volumes:
+      - /etc/servarr/config/jellyfin:/config
+      - /etc/servarr/media:/data/media
     ports:
       - "8096:8096"
       - "8920:8920"
@@ -21,10 +21,10 @@ services:
       - PUID=1000
       - PGID=1000
       - TZ=America/Los_Angeles
-    # volumes:
-    #   - ./config/sonarr.config.xml:/config/config.xml
-    #   - /path/to/media/tv:/tv
-    #   - /path/to/downloads:/downloads
+    volumes:
+      - /etc/servarr/config/sonarr:/config
+      - /etc/servarr/media/tv:/tv
+      - /etc/servarr/downloads:/downloads
     ports:
       - "8989:8989"
     restart: unless-stopped
@@ -36,10 +36,10 @@ services:
       - PUID=1000
       - PGID=1000
       - TZ=America/Los_Angeles
-    # volumes:
-    #   - /path/to/config/radarr:/config
-    #   - /path/to/media/movies:/movies
-    #   - /path/to/downloads:/downloads
+    volumes:
+      - /etc/servarr/config/radarr:/config
+      - /etc/servarr/media/movies:/movies
+      - /etc/servarr/downloads:/downloads
     ports:
       - "7878:7878"
     restart: unless-stopped
@@ -51,8 +51,8 @@ services:
       - PUID=1000
       - PGID=1000
       - TZ=America/Los_Angeles
-    # volumes:
-    #   - /path/to/config/prowlarr:/config
+    volumes:
+      - /etc/servarr/config/prowlarr:/config
     ports:
       - "9696:9696"
     restart: unless-stopped
@@ -64,9 +64,10 @@ services:
       - PUID=1000
       - PGID=1000
       - TZ=America/Los_Angeles
-    # volumes:
-    #   - /path/to/config/bazarr:/config
-    #   - /path/to/media:/media
+    volumes:
+      - /etc/servarr/config/bazarr:/config
+      - /etc/servarr/media/tv:/tv
+      - /etc/servarr/media/movies:/movies
     ports:
       - "6767:6767"
     restart: unless-stopped
@@ -79,13 +80,29 @@ services:
     restart: unless-stopped
 
   tunarr:
-    image: chrisbenincasa/tunarr:latest-arm64
+    image: chrisbenincasa/tunarr:latest
     container_name: tunarr
     environment:
       - TZ=America/Los_Angeles
-    # volumes:
-    #   - /path/to/config/tunarr:/config/tunarr
-    #   - /path/to/config/dizquetv:/.dizquetv
+    volumes:
+      - /etc/servarr/config/tunarr:/config/tunarr
+      - /etc/servarr/config/dizquetv:/.dizquetv
     ports:
       - "8000:8000"
     restart: unless-stopped
+
+  rclone-sync:
+    image: rclone/rclone:latest
+    container_name: rclone-sync
+    restart: unless-stopped
+    environment:
+      - TZ=America/Los_Angeles
+    volumes:
+      - /etc/servarr/rclone:/config/rclone
+      - /etc/servarr/downloads:/downloads
+    entrypoint: /bin/sh
+    command: |
+      -c "while true; do \
+            rclone sync seedhost:www/clsk.raw.seedhost.eu/clsk/downloads /downloads --progress; \
+            sleep 30; \
+          done"
